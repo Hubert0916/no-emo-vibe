@@ -5,19 +5,17 @@ import UIKit
 
 struct DiaryView: View {
     @EnvironmentObject var diaryManager: DiaryManager
-    @Environment(\.colorScheme) private var colorScheme
     
     @State private var selectedMonth: Date = Date()  // 當前選中月份
     @State private var dragOffset: CGFloat = 0  // 滑動手勢的偏移量
     @State private var showingDatePicker = false  // 控制日期選擇器的顯示
     @State private var selectedDate = Date()  // 用於補記的日期
     
-    // 漸層背景色
-    private var gradientColors: [Color] {
-        colorScheme == .dark ?
-            [Color(red: 0.1, green: 0.2, blue: 0.3), Color(red: 0.2, green: 0.3, blue: 0.4)] :
-            [Color(red: 0.8, green: 0.9, blue: 1.0), Color(red: 0.7, green: 0.8, blue: 0.9)]
-    }
+    // 漸層背景色 - 統一使用淺色模式的顏色
+    private var gradientColors: [Color] = [
+        Color(red: 0.8, green: 0.9, blue: 1.0), 
+        Color(red: 0.7, green: 0.8, blue: 0.9)
+    ]
     
     // 格式化月份顯示
     private var monthFormatter: DateFormatter {
@@ -109,7 +107,9 @@ struct DiaryView: View {
         // 日期選擇器彈窗
         .sheet(isPresented: $showingDatePicker) {
             DatePickerView(selectedDate: $selectedDate, isPresented: $showingDatePicker, diaryManager: diaryManager)
+                .preferredColorScheme(.light)
         }
+        .preferredColorScheme(.light)
     }
     
     // 月份選擇器視圖

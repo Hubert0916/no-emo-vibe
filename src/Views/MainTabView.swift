@@ -192,6 +192,7 @@ struct MainTabView: View {
             .edgesIgnoringSafeArea(.all)
         }
         .edgesIgnoringSafeArea(.all)
+        .preferredColorScheme(.light)
         .onAppear {
             // 延遲顯示TabBar來創造入場動畫
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {

@@ -5,7 +5,6 @@ struct QuestionCard: View {
     let question: Question
     let questionIndex: Int
     let onOptionSelected: (Int) -> Void
-    @Environment(\.colorScheme) private var colorScheme
     
     @State private var cardRotation: Double = 0
     @State private var cardScale: CGFloat = 0.9
@@ -37,9 +36,7 @@ struct QuestionCard: View {
                             .frame(maxWidth: .infinity)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(colorScheme == .dark ? 
-                                         Color(uiColor: .secondarySystemBackground) : 
-                                         Color.white)
+                                    .fill(Color.white)
                                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                             )
                             .overlay(
@@ -56,7 +53,7 @@ struct QuestionCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(UIColor.systemBackground).opacity(0.8))
+                .fill(Color.white.opacity(0.8))
                 .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
         )
         .rotation3DEffect(
@@ -941,6 +938,10 @@ struct RelaxationView: View {
                 }
             }
         }
+        .onAppear {
+            performMoodAnalysis()
+        }
+        .preferredColorScheme(.light) // 強制使用淺色模式
     }
     
     private var questionView: some View {
@@ -1121,6 +1122,10 @@ struct RelaxationView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             preparedImage = moodResultView.snapshot()
         }
+    }
+    
+    private func performMoodAnalysis() {
+        // 實現心情分析的邏輯
     }
 }
 

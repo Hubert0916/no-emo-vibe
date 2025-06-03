@@ -309,7 +309,9 @@ struct NoEmoVibeMainView: View {
         .sheet(isPresented: $isRelaxationStarted) {
             RelaxationView()
                 .environmentObject(diaryManager)
+                .preferredColorScheme(.light)
         }
+        .preferredColorScheme(.light)
         .onAppear {
             // 開始動畫
             withAnimation(.easeInOut(duration: 2)) {

@@ -14,6 +14,12 @@ import UIKit
 struct NoEmoVibeApp: App {
     init() {
         #if canImport(UIKit)
+        // 強制使用淺色模式，不支援深色模式
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.overrideUserInterfaceStyle = .light
+        }
+        
         // 配置全局導航欄樣式
         let navBarAppearance = UINavigationBarAppearance()
         navBarAppearance.configureWithTransparentBackground()
@@ -34,6 +40,7 @@ struct NoEmoVibeApp: App {
             MainTabView()
                 .edgesIgnoringSafeArea(.all)
                 .statusBar(hidden: true)
+                .preferredColorScheme(.light) // 強制使用淺色模式
         }
     }
 }

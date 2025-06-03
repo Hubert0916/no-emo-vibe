@@ -3,7 +3,6 @@ import Charts
 
 struct MoodAnalysisView: View {
     @EnvironmentObject var diaryManager: DiaryManager
-    @Environment(\.colorScheme) private var colorScheme
     @State private var selectedTimeRange: TimeRange = .week
     @State private var selectedMonth: Date = Date()
     
@@ -14,12 +13,11 @@ struct MoodAnalysisView: View {
         return formatter
     }
     
-    // 漸層背景色
-    private var gradientColors: [Color] {
-        colorScheme == .dark ?
-            [Color(red: 0.1, green: 0.2, blue: 0.3), Color(red: 0.2, green: 0.3, blue: 0.4)] :
-            [Color(red: 0.8, green: 0.9, blue: 1.0), Color(red: 0.7, green: 0.8, blue: 0.9)]
-    }
+    // 漸層背景色 - 統一使用淺色模式的顏色
+    private var gradientColors: [Color] = [
+        Color(red: 0.8, green: 0.9, blue: 1.0), 
+        Color(red: 0.7, green: 0.8, blue: 0.9)
+    ]
     
     // 時間範圍選項
     enum TimeRange: String, CaseIterable {
@@ -115,6 +113,7 @@ struct MoodAnalysisView: View {
             }
         }
         .navigationBarHidden(true)
+        .preferredColorScheme(.light) // 強制使用淺色模式
     }
     
     // 時間範圍選擇器
@@ -302,9 +301,7 @@ struct MoodAnalysisView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(colorScheme == .dark ? 
-                                     Color(uiColor: .secondarySystemBackground) : 
-                                     Color.white)
+                                .fill(Color.white)
                                 .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                         )
                     }
@@ -375,9 +372,7 @@ struct MoodAnalysisView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(colorScheme == .dark ? 
-                     Color(uiColor: .secondarySystemBackground) : 
-                     Color.white)
+                .fill(Color.white)
                 .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         )
     }
