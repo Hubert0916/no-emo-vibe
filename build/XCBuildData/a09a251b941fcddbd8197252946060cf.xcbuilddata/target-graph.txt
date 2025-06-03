@@ -1,6 +1,0 @@
-Target dependency graph (3 targets)
-Target 'no-emo-vibe' in project 'no-emo-vibe'
-➜ Explicit dependency on target 'HorizonCalendar' in project 'HorizonCalendar'
-Target 'HorizonCalendar' in project 'HorizonCalendar'
-➜ Explicit dependency on target 'HorizonCalendar' in project 'HorizonCalendar'
-Target 'HorizonCalendar' in project 'HorizonCalendar' (no dependencies)

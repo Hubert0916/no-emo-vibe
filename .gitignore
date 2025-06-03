@@ -12,6 +12,7 @@ DerivedData/
 *.ipa
 *.dSYM.zip
 *.dSYM
+build/
 
 # CocoaPods
 Pods/
@@ -62,3 +63,4 @@ Package.resolved
 *.log
 .env
 .env.* 
+.cursorrules
