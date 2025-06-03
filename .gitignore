@@ -1,0 +1,64 @@
+# Xcode
+## 使用者設定
+xcuserdata/
+*.xcuserstate
+project.xcworkspace/
+xcshareddata/
+DerivedData/
+.swiftpm/
+
+# 編譯產生的文件
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# CocoaPods
+Pods/
+*.xcconfig
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# SPM
+.build/
+
+# macOS 系統文件
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Xcode 自動生成的文件
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+
+# Swift Package Manager
+Package.resolved
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# 編譯文件
+*.o
+*.LinkFileList
+*.hmap
+
+# 測試覆蓋率報告
+*.gcda
+*.gcno
+*.xcresult
+
+# 其他
+*.log
+.env
+.env.* 

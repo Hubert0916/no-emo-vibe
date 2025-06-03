@@ -1,0 +1,4 @@
+module HorizonCalendar {
+header "HorizonCalendar-Swift.h"
+export *
+}

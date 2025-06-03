@@ -94,6 +94,8 @@
 			);
 			mainGroup = 6A41B4D32DDE002600FE9B21;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6A41B4DD2DDE002600FE9B21 /* Products */;
 			projectDirPath = "";
@@ -247,6 +249,7 @@
 				CODE_SIGN_ENTITLEMENTS = "no-emo-vibe/no_emo_vibe.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TG2CPSS792;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -284,6 +287,7 @@
 				CODE_SIGN_ENTITLEMENTS = "no-emo-vibe/no_emo_vibe.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TG2CPSS792;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
