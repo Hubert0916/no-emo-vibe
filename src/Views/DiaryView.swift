@@ -131,7 +131,6 @@ struct DiaryView: View {
             Text(monthFormatter.string(from: selectedMonth))
                 .font(.title2)
                 .fontWeight(.bold)
-                .padding(.top)
                 .offset(x: dragOffset / 10)  // 輕微跟隨滑動效果
             
             Spacer()
@@ -148,6 +147,7 @@ struct DiaryView: View {
             .padding()
         }
         .padding(.horizontal)
+        .padding(.top, 10) // 增加頂部間距，避免與動態島碰撞
     }
     
     private var emptyStateView: some View {

@@ -694,19 +694,19 @@ struct RelaxationView: View {
         let randomQuote = positiveQuotes.randomElement() ?? ""
         
         return """
-        \(randomEmojis.joined()) 今日心情追蹤 \(randomEmojis.joined())
-        
-        💭 心情指數：\(percentage)%
-        ✨ 心情狀態：\(mood.0)
-        🎯 心情描述：\(mood.1)
-        
-        💫 每日小語：
-        \(randomQuote)
-        
-        \(moodPhrase)
-        
-        #NoEmoVibe #心情追蹤 #情緒健康
-        """
+\(randomEmojis.joined()) 今日心情追蹤 \(randomEmojis.joined())
+
+💭 心情指數：\(percentage)%
+✨ 心情狀態：\(mood.0)
+🎯 心情描述：\(mood.1)
+
+💫 每日小語：
+\(randomQuote)
+
+\(moodPhrase)
+
+#NoEmoVibe #心情追蹤 #情緒健康
+"""
     }
     
     // 根據心情百分比取得心情描述
@@ -766,7 +766,11 @@ struct RelaxationView: View {
                             guard !isShareButtonDisabled else { return }
                             isShareButtonDisabled = true
                             
-                            shareItems = [generateShareContent(), preparedImage ?? UIImage()]
+                            // 準備分享內容
+                            let shareText = generateShareContent()
+                            let shareImage = preparedImage ?? createShareImage()
+                            
+                            shareItems = [shareText, shareImage]
                             showShareSheet = true
                             
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -819,9 +823,7 @@ struct RelaxationView: View {
                         }
                         .onAppear {
                             // 在結果頁面顯示時預先準備分享資源
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                preparedImage = moodResultView.snapshot()
-                            }
+                            prepareShareResources()
                         }
                         .transition(.scale.combined(with: .opacity))
                         .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2), value: showResult)
@@ -1117,11 +1119,92 @@ struct RelaxationView: View {
         }
     }
     
-    // 當結果頁面顯示時，預先準備分享資源
+    // 預先準備分享資源
     private func prepareShareResources() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            preparedImage = moodResultView.snapshot()
+            preparedImage = createShareImage()
         }
+    }
+    
+    // 創建分享圖片
+    private func createShareImage() -> UIImage {
+        let averageScore = Double(moodScore) / Double(questions.count)
+        let percentage = Int(averageScore / 4 * 100)
+        let moodDescription = getMoodDescription(for: percentage)
+        
+        // 創建分享卡片視圖
+        let shareCardView = VStack(spacing: 20) {
+            // 標題
+            Text("NoEmoVibe 心情追蹤")
+                .font(.system(.title, design: .rounded))
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
+            
+            // 心情結果
+            VStack(spacing: 15) {
+                // 心情環形圖
+                ZStack {
+                    Circle()
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 8)
+                        .frame(width: 120, height: 120)
+                    
+                    Circle()
+                        .trim(from: 0, to: CGFloat(percentage) / 100)
+                        .stroke(moodDescription.2, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .frame(width: 120, height: 120)
+                        .rotationEffect(.degrees(-90))
+                    
+                    VStack(spacing: 5) {
+                        Text("\(percentage)%")
+                            .font(.system(.title, design: .rounded))
+                            .fontWeight(.bold)
+                            .foregroundColor(moodDescription.2)
+                        
+                        Text("心情指數")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                // 心情描述
+                VStack(spacing: 8) {
+                    Text(moodDescription.0)
+                        .font(.system(.title2, design: .rounded))
+                        .fontWeight(.bold)
+                        .foregroundColor(moodDescription.2)
+                    
+                    Text(moodDescription.1)
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                }
+            }
+            
+            // 底部標語
+            Text("每一天都是新的開始 🌱")
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundColor(.secondary)
+                .italic()
+        }
+        .padding(30)
+        .frame(width: 350, height: 450)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color(red: 0.95, green: 0.97, blue: 1.0),
+                            Color(red: 0.9, green: 0.95, blue: 0.98)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+        )
+        
+        return shareCardView.snapshot()
     }
     
     private func performMoodAnalysis() {
@@ -1188,13 +1271,23 @@ extension View {
         let controller = UIHostingController(rootView: self)
         let view = controller.view
         
-        let targetSize = controller.view.intrinsicContentSize
+        // 設置固定大小，避免 intrinsicContentSize 問題
+        let targetSize = CGSize(width: 350, height: 450)
         view?.bounds = CGRect(origin: .zero, size: targetSize)
         view?.backgroundColor = .clear
+        
+        // 強制佈局更新
+        controller.view.setNeedsLayout()
+        controller.view.layoutIfNeeded()
 
         let renderer = UIGraphicsImageRenderer(size: targetSize)
-        return renderer.image { _ in
-            view?.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
+        return renderer.image { context in
+            // 設置白色背景
+            UIColor.white.setFill()
+            context.fill(CGRect(origin: .zero, size: targetSize))
+            
+            // 繪製視圖
+            view?.drawHierarchy(in: CGRect(origin: .zero, size: targetSize), afterScreenUpdates: true)
         }
     }
 }

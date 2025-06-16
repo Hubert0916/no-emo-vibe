@@ -84,7 +84,7 @@ struct MoodAnalysisView: View {
                 Text("心情分析")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .padding(.top)
+                    .padding(.top, 20) // 增加頂部間距，避免與動態島碰撞
                 
                 // 時間範圍選擇器
                 timeRangeSelector
