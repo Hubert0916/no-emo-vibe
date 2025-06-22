@@ -1,5 +1,6 @@
 import SwiftUI
 import Charts
+import UIKit
 
 struct MoodAnalysisView: View {
     @EnvironmentObject var diaryManager: DiaryManager

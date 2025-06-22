@@ -1,7 +1,5 @@
 import SwiftUI
-#if canImport(UIKit)
 import UIKit
-#endif
 
 #if os(iOS)
 extension View {
@@ -67,9 +65,9 @@ struct NoEmoVibeMainView: View {
     @State private var buttonOpacity: Double = 0
     
     // 建立粒子
-    private func setupParticles() {
-        let screenWidth = UIScreen.main.bounds.width
-        let screenHeight = UIScreen.main.bounds.height
+    private func setupParticles(screenSize: CGSize = CGSize(width: 390, height: 844)) {
+        let screenWidth = screenSize.width
+        let screenHeight = screenSize.height
         
         var newParticles: [Particle] = []
         for _ in 0..<20 {
@@ -318,7 +316,7 @@ struct NoEmoVibeMainView: View {
                 animatedBackground = true
             }
             
-            // 產生粒子
+            // 產生粒子 - 使用預設大小，在 GeometryReader 中會自動調整
             setupParticles()
             
             // 葉子動畫

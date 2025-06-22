@@ -1,7 +1,6 @@
 import SwiftUI
-#if canImport(UIKit)
 import UIKit
-#endif
+import Combine
 
 struct DiaryView: View {
     @EnvironmentObject var diaryManager: DiaryManager
@@ -45,6 +44,20 @@ struct DiaryView: View {
             VStack {
                 // 月份選擇器
                 monthSelectorView
+                
+                // 同步狀態顯示
+                VStack {
+                    if let errorMessage = diaryManager.errorMessage {
+                        ErrorBannerView(errorMessage: errorMessage, onDismiss: {
+                            diaryManager.errorMessage = nil
+                        }, diaryManager: diaryManager)
+                        .padding(.horizontal)
+                    }
+                    
+                    SyncStatusView(diaryManager: diaryManager)
+                        .padding(.horizontal)
+                        .padding(.top, 5)
+                }
                 
                 if filteredEntries.isEmpty {
                     emptyStateView
@@ -210,7 +223,7 @@ struct DatePickerView: View {
     
     var body: some View {
         ZStack {
-            // 背景
+            // 背景色
             Color.black.opacity(0.3)
                 .ignoresSafeArea()
                 .onTapGesture {
@@ -365,9 +378,13 @@ struct DiaryEntryRow: View {
             
             Spacer()
             
-            Image(systemName: "chevron.right")
-                .foregroundColor(.secondary)
-                .font(.system(.body, design: .rounded))
+            VStack(alignment: .trailing, spacing: 4) {
+                EntryStatusIndicator(entry: entry)
+                
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+                    .font(.system(.body, design: .rounded))
+            }
         }
         .padding()
         .background(
@@ -419,8 +436,9 @@ struct DiaryEntryDetailView: View {
             // 背景色
             Color(red: 0.95, green: 0.95, blue: 1.0)
                 .ignoresSafeArea()
-            
-            ScrollView {
+
+            // 使用智能鍵盤避讓容器
+            KeyboardAvoidingContainer {
                 VStack(spacing: 25) {
                     // 日期和心情
                     Text(dateFormatter.string(from: entry.date))
@@ -514,33 +532,30 @@ struct DiaryEntryDetailView: View {
                         .padding(.horizontal)
                     }
                     
-                    // 筆記
+                    // 筆記輸入區
                     VStack(alignment: .leading, spacing: 10) {
                         Text("我的感受")
                             .font(.system(.title3, design: .rounded))
                             .fontWeight(.bold)
                             .padding(.horizontal)
                         
-                        TextEditor(text: $notes)
-                            .font(.system(.body, design: .rounded))
-                            .frame(minHeight: 150)
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(.white)
-                                    .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
-                            )
-                            .padding(.horizontal)
-                            .onChange(of: notes) { _, newValue in
-                                saveNotes()
-                            }
+                        SmartTextEditor(
+                            text: $notes,
+                            placeholder: "寫下你的感受...",
+                            minHeight: 150
+                        ) {
+                            saveNotes()
+                        }
+                        .padding(.horizontal)
                     }
                     
-                    // 底部間距
-                    Spacer(minLength: 30)
+                    // 底部標記，用於滾動定位
+                    Color.clear
+                        .frame(height: 1)
+                        .id("bottom")
                 }
             }
-            
+
             // 保存成功提示
             if showingSaveSuccess {
                 VStack {

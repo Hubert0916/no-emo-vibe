@@ -1,7 +1,5 @@
 import SwiftUI
-#if canImport(UIKit)
 import UIKit
-#endif
 
 // 自定義TabBar項目視圖
 struct CustomTabItem: View {

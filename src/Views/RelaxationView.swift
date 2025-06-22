@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // 問題卡片視圖
 struct QuestionCard: View {
@@ -257,36 +258,37 @@ struct AnimatedMoodRing: View {
     
     var body: some View {
         ZStack {
-            // 外環脈動效果
+            // 外環脈動效果 - 縮小並增加間距
             Circle()
-                .stroke(color.opacity(0.2), lineWidth: 20)
+                .stroke(color.opacity(0.15), lineWidth: 12)
                 .scaleEffect(pulseScale)
                 .opacity(pulseOpacity)
             
-            // 發光效果
+            // 發光效果 - 調整大小避免重疊
             Circle()
-                .stroke(color.opacity(0.3), lineWidth: 25)
-                .blur(radius: 15)
+                .stroke(color.opacity(0.2), lineWidth: 15)
+                .blur(radius: 10)
+                .scaleEffect(0.75)
+            
+            // 背景環 - 調整線寬
+            Circle()
+                .stroke(lineWidth: 12)
+                .opacity(0.25)
+                .foregroundColor(color)
                 .scaleEffect(0.85)
             
-            // 背景環
-            Circle()
-                .stroke(lineWidth: 15)
-                .opacity(0.3)
-                .foregroundColor(color)
-            
-            // 進度環 - 使用單一顏色
+            // 進度環 - 調整大小確保不重疊
             Circle()
                 .trim(from: 0.0, to: CGFloat(min(animatedPercentage / 100, 1.0)))
-                .stroke(style: StrokeStyle(lineWidth: 15, lineCap: .round, lineJoin: .round))
+                .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .round, lineJoin: .round))
                 .foregroundColor(color)
                 .rotationEffect(Angle(degrees: ringRotation))
-                .scaleEffect(ringScale)
+                .scaleEffect(ringScale * 0.85) // 確保進度環在背景環內部
             
             // 百分比文字
             VStack(spacing: 5) {
                 Text("\(percentage)%")
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundColor(color)
                 
                 Text("心情指數")
@@ -311,10 +313,10 @@ struct AnimatedMoodRing: View {
                 textOpacity = 1
             }
             
-            // 脈動效果
+            // 脈動效果 - 調整範圍避免重疊
             withAnimation(Animation.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
-                pulseScale = 1.1
-                pulseOpacity = 0.4
+                pulseScale = 1.05 // 減小脈動範圍
+                pulseOpacity = 0.3
             }
         }
     }
@@ -664,7 +666,9 @@ struct RelaxationView: View {
     
     // 生成分享內容
     private func generateShareContent() -> String {
-        let percentage = Int(Double(moodScore) / Double(questions.count) / 4 * 100)
+        let averageScore = Double(moodScore) / Double(questions.count)
+        // 確保百分比不會超過100%，統一計算方式
+        let percentage = Int(min(averageScore / 4.0 * 100.0, 100.0))
         let mood = getMoodDescription(for: percentage)
         let randomEmojis = ["✨", "🌈", "🎯", "💫", "🌟", "⭐️", "🔆", "🎨"].shuffled().prefix(2)
         
@@ -732,6 +736,7 @@ struct RelaxationView: View {
                           startPoint: .topLeading,
                           endPoint: .bottomTrailing)
                 .ignoresSafeArea()
+                .dismissKeyboardOnTap() // 點擊背景取消鍵盤
             
             // 浮動背景粒子
             ForEach(0..<15) { index in
@@ -860,20 +865,16 @@ struct RelaxationView: View {
                                     .font(.system(.headline, design: .rounded))
                                     .padding(.horizontal)
                                 
-                                TextEditor(text: $notes)
-                                    .padding()
-                                    .frame(minHeight: 100)
-                                    .background(Color(UIColor.systemBackground))
-                                    .cornerRadius(16)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                                    )
-                                    .padding(.horizontal)
-                                    .onChange(of: notes) { _, newValue in
-                                        // 筆記內容變更時自動保存
-                                        saveToJournal()
-                                    }
+                                SmartTextEditor(
+                                    text: $notes,
+                                    placeholder: "分享你的感受和想法...",
+                                    minHeight: 100
+                                ) {
+                                    // 筆記內容變更時自動保存
+                                    saveToJournal()
+                                }
+                                .padding(.horizontal)
+                                .id("notesEditor") // 用於滾動定位
                             }
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                             .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.5), value: showResult)
@@ -944,6 +945,7 @@ struct RelaxationView: View {
             performMoodAnalysis()
         }
         .preferredColorScheme(.light) // 強制使用淺色模式
+        .smartKeyboardAdaptive() // 智能鍵盤適應功能
     }
     
     private var questionView: some View {
@@ -975,7 +977,8 @@ struct RelaxationView: View {
     
     private var moodResultView: some View {
         let averageScore = Double(moodScore) / Double(questions.count)
-        let percentage = Int(averageScore / 4 * 100)
+        // 確保百分比不會超過100%
+        let percentage = Int(min(averageScore / 4.0 * 100.0, 100.0))
         
         let moodDescription: (String, String, Color) = {
             switch averageScore {
@@ -1086,6 +1089,9 @@ struct RelaxationView: View {
             recommendedDynamicActivities = getRecommendedDynamicActivities()
             recommendedStaticActivities = getRecommendedStaticActivities()
             
+            // 立即保存到日記，確保數據不丟失
+            saveToJournal()
+            
             // 顯示完成動畫
             withAnimation {
                 showTransition = true
@@ -1096,7 +1102,8 @@ struct RelaxationView: View {
     // 保存評估結果到日記
     private func saveToJournal() {
         let averageScore = Double(moodScore) / Double(questions.count)
-        let percentage = Int(averageScore / 4 * 100)
+        // 確保百分比不會超過100%
+        let percentage = Int(min(averageScore / 4.0 * 100.0, 100.0))
         
         let entry = DiaryEntry(
             date: customDate,  // 使用自定義日期而不是當前日期
@@ -1129,7 +1136,8 @@ struct RelaxationView: View {
     // 創建分享圖片
     private func createShareImage() -> UIImage {
         let averageScore = Double(moodScore) / Double(questions.count)
-        let percentage = Int(averageScore / 4 * 100)
+        // 確保百分比不會超過100%
+        let percentage = Int(min(averageScore / 4.0 * 100.0, 100.0))
         let moodDescription = getMoodDescription(for: percentage)
         
         // 創建分享卡片視圖
@@ -1156,8 +1164,7 @@ struct RelaxationView: View {
                     
                     VStack(spacing: 5) {
                         Text("\(percentage)%")
-                            .font(.system(.title, design: .rounded))
-                            .fontWeight(.bold)
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
                             .foregroundColor(moodDescription.2)
                         
                         Text("心情指數")
