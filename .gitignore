@@ -1,5 +1,5 @@
 # Xcode
-## 使用者設定
+## user settings
 xcuserdata/
 *.xcuserstate
 project.xcworkspace/
@@ -7,7 +7,7 @@ xcshareddata/
 DerivedData/
 .swiftpm/
 
-# 編譯產生的文件
+# compiled files
 *.hmap
 *.ipa
 *.dSYM.zip
@@ -25,13 +25,13 @@ Carthage/Build/
 # SPM
 .build/
 
-# macOS 系統文件
+# macOS system files
 .DS_Store
 .AppleDouble
 .LSOverride
 ._*
 
-# Xcode 自動生成的文件
+# Xcode automatically generated files
 *.moved-aside
 *.xccheckout
 *.xcscmblueprint
@@ -54,12 +54,29 @@ Package.resolved
 *.LinkFileList
 *.hmap
 
-# 測試覆蓋率報告
+# test coverage reports
 *.gcda
 *.gcno
 *.xcresult
 
-# 其他
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+.envrc
+.mypy_cache/
+.pytest_cache/
+
+# Poetry / uv
+uv.lock
+.uv/
+
+# Docker
+*.containerlog
+
+# other
 *.log
 .env
 .env.* 

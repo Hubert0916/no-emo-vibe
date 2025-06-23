@@ -1,0 +1,18 @@
+[project]
+name = "no-emo-vibe-api"
+version = "1.0.0"
+description = "API for no-emo-vibe app"
+authors = [
+    {name = "YuhanQiu", email = "yuhanqiu916@gmail.com"}
+]
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "psycopg2-binary",
+    "sqlalchemy",
+    "pydantic",
+    "python-dotenv",
+    "asyncpg",
+    "databases[postgresql]",
+]
