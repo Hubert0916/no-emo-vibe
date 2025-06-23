@@ -28,6 +28,7 @@ def read_root():
 
 # ----------------------------- User Endpoints -----------------------------
 # Register a new device (or confirm an existing one)
+@app.post("/register", response_model=APIResponse)
 def register_device(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new device (idempotent)."""
     try:
@@ -57,6 +58,7 @@ def register_device(user_data: UserCreate, db: Session = Depends(get_db)):
 
 # ---------------------------- Diary Endpoints -----------------------------
 # Upload a diary entry
+@app.post("/diary", response_model=APIResponse)
 def create_diary_entry(entry_data: DiaryEntryCreate, db: Session = Depends(get_db)):
     """Upload a diary entry."""
     try:
@@ -101,6 +103,7 @@ def create_diary_entry(entry_data: DiaryEntryCreate, db: Session = Depends(get_d
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 # Retrieve diary entries for a device
+@app.get("/diary")
 def get_diary_entries(device_id: str = Query(..., description="Device ID"), db: Session = Depends(get_db)):
     """Get diary entries for the specified device."""
     try:
@@ -120,6 +123,7 @@ def get_diary_entries(device_id: str = Query(..., description="Device ID"), db: 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve diary entries: {str(e)}")
 
+@app.put("/diary/{entry_uuid}", response_model=APIResponse)
 def update_diary_entry(
     entry_uuid: str, 
     entry_data: DiaryEntryUpdate, 
