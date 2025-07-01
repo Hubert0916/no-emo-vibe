@@ -6,6 +6,7 @@ import Combine
 class KeyboardManager: ObservableObject {
     @Published var keyboardHeight: CGFloat = 0
     @Published var isKeyboardVisible: Bool = false
+    @Published var keyboardAnimationDuration: Double = 0.3
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -16,15 +17,17 @@ class KeyboardManager: ObservableObject {
     private func setupKeyboardNotifications() {
         // 鍵盤將要顯示
         NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)
-            .compactMap { notification -> CGFloat? in
-                guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else {
+            .compactMap { notification -> (CGFloat, Double)? in
+                guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+                      let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double else {
                     return nil
                 }
-                return keyboardFrame.height
+                return (keyboardFrame.height, duration)
             }
-            .sink { [weak self] height in
+            .sink { [weak self] (height, duration) in
                 DispatchQueue.main.async {
-                    withAnimation(.easeInOut(duration: 0.3)) {
+                    self?.keyboardAnimationDuration = duration
+                    withAnimation(.easeInOut(duration: duration)) {
                         self?.keyboardHeight = height
                         self?.isKeyboardVisible = true
                     }
@@ -34,9 +37,13 @@ class KeyboardManager: ObservableObject {
         
         // 鍵盤將要隱藏
         NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)
-            .sink { [weak self] _ in
+            .compactMap { notification -> Double? in
+                return notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double
+            }
+            .sink { [weak self] duration in
                 DispatchQueue.main.async {
-                    withAnimation(.easeInOut(duration: 0.3)) {
+                    self?.keyboardAnimationDuration = duration
+                    withAnimation(.easeInOut(duration: duration)) {
                         self?.keyboardHeight = 0
                         self?.isKeyboardVisible = false
                     }
@@ -60,6 +67,7 @@ struct SmartTextEditor: View {
     @State private var isEditing = false
     @FocusState private var isTextEditorFocused: Bool
     @State private var textHeight: CGFloat = 0
+    @EnvironmentObject private var keyboardManager: KeyboardManager
     
     init(
         text: Binding<String>,
@@ -103,6 +111,13 @@ struct SmartTextEditor: View {
                     withAnimation(.easeInOut(duration: 0.25)) {
                         isEditing = focused
                     }
+                    
+                    // 當文字框獲得焦點時，觸發滾動
+                    if focused {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            NotificationCenter.default.post(name: .textEditorFocused, object: nil)
+                        }
+                    }
                 }
                 .onAppear {
                     updateTextHeight()
@@ -140,20 +155,21 @@ struct SmartTextEditor: View {
 struct KeyboardAvoidingContainer<Content: View>: View {
     @StateObject private var keyboardManager = KeyboardManager()
     @ViewBuilder let content: Content
-    let scrollToBottom: Bool
-    
-    init(scrollToBottom: Bool = true, @ViewBuilder content: () -> Content) {
-        self.scrollToBottom = scrollToBottom
-        self.content = content()
-    }
     
     var body: some View {
         GeometryReader { geometry in
             ScrollViewReader { scrollProxy in
                 ScrollView(.vertical, showsIndicators: false) {
-                    content
-                        .padding(.bottom, keyboardManager.isKeyboardVisible ? (keyboardManager.keyboardHeight + 20) : 20)
-                        .frame(minHeight: geometry.size.height - (keyboardManager.isKeyboardVisible ? keyboardManager.keyboardHeight : 0))
+                    VStack(spacing: 0) {
+                        content
+                            .environmentObject(keyboardManager)
+                        
+                        // 動態底部間距，確保內容不被鍵盤遮擋
+                        Spacer()
+                            .frame(height: keyboardManager.isKeyboardVisible ? keyboardManager.keyboardHeight + 100 : 20)
+                            .animation(.easeInOut(duration: keyboardManager.keyboardAnimationDuration), value: keyboardManager.keyboardHeight)
+                    }
+                    .frame(minWidth: geometry.size.width)
                 }
                 .background(
                     Color.clear
@@ -162,12 +178,21 @@ struct KeyboardAvoidingContainer<Content: View>: View {
                             keyboardManager.hideKeyboard()
                         }
                 )
+                .onReceive(NotificationCenter.default.publisher(for: .textEditorFocused)) { _ in
+                    // 當收到文字編輯器獲得焦點的通知時，滾動到錨點
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            scrollProxy.scrollTo("textInputAnchor", anchor: .center)
+                        }
+                    }
+                }
                 .onChange(of: keyboardManager.isKeyboardVisible) { _, isVisible in
-                    if isVisible && scrollToBottom {
-                        // 當鍵盤顯示時，延遲滾動確保佈局完成
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    if isVisible {
+                        print("鍵盤顯示，嘗試滾動到文字輸入區域")
+                        // 當鍵盤顯示時，滾動到錨點位置
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                             withAnimation(.easeInOut(duration: 0.5)) {
-                                scrollProxy.scrollTo("keyboardAnchor", anchor: .bottom)
+                                scrollProxy.scrollTo("textInputAnchor", anchor: .center)
                             }
                         }
                     }
@@ -175,15 +200,14 @@ struct KeyboardAvoidingContainer<Content: View>: View {
                 .coordinateSpace(name: "keyboardAvoidingContainer")
             }
         }
-        .environmentObject(keyboardManager)
     }
 }
 
 // MARK: - View 擴展
 extension View {
-    /// 為視圖添加鍵盤避讓功能
-    func keyboardAvoiding(scrollToBottom: Bool = true) -> some View {
-        KeyboardAvoidingContainer(scrollToBottom: scrollToBottom) {
+    /// 統一的鍵盤適應功能
+    func adaptiveKeyboard() -> some View {
+        KeyboardAvoidingContainer {
             self
         }
     }
@@ -203,15 +227,43 @@ extension View {
     func dismissKeyboardOnTap() -> some View {
         hideKeyboardOnTap()
     }
+}
+
+// MARK: - 智能鍵盤避讓修飾符
+struct SmartKeyboardAvoidingModifier: ViewModifier {
+    @StateObject private var keyboardManager = KeyboardManager()
     
-    /// 統一的鍵盤適應功能（推薦使用）
-    func adaptiveKeyboard(scrollToBottom: Bool = true) -> some View {
-        keyboardAvoiding(scrollToBottom: scrollToBottom)
-            .hideKeyboardOnTap()
+    func body(content: Content) -> some View {
+        GeometryReader { geometry in
+            ScrollViewReader { scrollProxy in
+                ScrollView {
+                    content
+                        .environmentObject(keyboardManager)
+                        .padding(.bottom, keyboardManager.keyboardHeight)
+                }
+                .background(
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            keyboardManager.hideKeyboard()
+                        }
+                )
+                .onChange(of: keyboardManager.isKeyboardVisible) { _, isVisible in
+                    if isVisible {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            withAnimation(.easeInOut(duration: 0.4)) {
+                                scrollProxy.scrollTo("textInputAnchor", anchor: .center)
+                            }
+                        }
+                    }
+                }
+                .animation(.easeInOut(duration: keyboardManager.keyboardAnimationDuration), value: keyboardManager.keyboardHeight)
+            }
+        }
     }
 }
 
-// MARK: - 智能鍵盤適應修飾符（已棄用，使用adaptiveKeyboard替代）
+// MARK: - 舊版智能鍵盤適應修飾符（已棄用）
 struct SmartKeyboardAdaptiveModifier: ViewModifier {
     @StateObject private var keyboardManager = KeyboardManager()
     
@@ -264,11 +316,26 @@ struct FloatingKeyboardToolbar: View {
     }
 }
 
-// MARK: - 鍵盤錨點視圖
-struct KeyboardAnchor: View {
+// MARK: - 文字輸入錨點視圖
+struct TextInputAnchor: View {
     var body: some View {
         Color.clear
             .frame(height: 1)
-            .id("keyboardAnchor")
+            .id("textInputAnchor")
+            .onAppear {
+                print("TextInputAnchor 已出現，ID: textInputAnchor")
+            }
     }
+}
+
+// MARK: - 鍵盤錨點視圖（保持向後兼容）
+struct KeyboardAnchor: View {
+    var body: some View {
+        TextInputAnchor()
+    }
+}
+
+// MARK: - 通知名稱擴展
+extension Notification.Name {
+    static let textEditorFocused = Notification.Name("textEditorFocused")
 } 

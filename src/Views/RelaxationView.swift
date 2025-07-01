@@ -750,185 +750,183 @@ struct RelaxationView: View {
             }
             
             if showResult {
-                ScrollView {
-                    VStack(spacing: 25) {
-                        // 結果標題
-                        Text("心情評估結果")
-                            .font(.system(.largeTitle, design: .rounded))
-                            .fontWeight(.bold)
-                            .padding(.top, 30)
-                            .shadow(color: .blue.opacity(0.3), radius: 2, x: 0, y: 1)
-                            .transition(.scale.combined(with: .opacity))
-                        
-                        // 心情圓環和描述
-                        moodResultView
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                            .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showResult)
-                        
-                        // 分享按鈕
-                        Button(action: {
-                            guard !isShareButtonDisabled else { return }
-                            isShareButtonDisabled = true
-                            
-                            // 準備分享內容
-                            let shareText = generateShareContent()
-                            let shareImage = preparedImage ?? createShareImage()
-                            
-                            shareItems = [shareText, shareImage]
-                            showShareSheet = true
-                            
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                isShareButtonDisabled = false
-                            }
-                        }) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "square.and.arrow.up")
-                                    .font(.system(size: 20, weight: .semibold))
-                                Text("分享")
-                                    .font(.system(size: 20, weight: .semibold))
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(
-                                ZStack {
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color(red: 0.98, green: 0.36, blue: 0.53),
-                                            Color(red: 0.91, green: 0.27, blue: 0.73),
-                                            Color(red: 0.51, green: 0.28, blue: 0.96)
-                                        ]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                    
-                                    // 光效
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color.white.opacity(0.3),
-                                            Color.white.opacity(0),
-                                            Color.white.opacity(0.3)
-                                        ]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                }
-                            )
-                            .cornerRadius(16)
-                            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
-                            .opacity(isShareButtonDisabled ? 0.6 : 1.0)
-                        }
-                        .padding(.horizontal)
-                        .sheet(isPresented: $showShareSheet, onDismiss: {
-                            // 確保分享表單關閉後重置按鈕狀態
-                            isShareButtonDisabled = false
-                        }) {
-                            ShareSheet(activityItems: shareItems)
-                        }
-                        .onAppear {
-                            // 在結果頁面顯示時預先準備分享資源
-                            prepareShareResources()
-                        }
+                VStack(spacing: 25) {
+                    // 結果標題
+                    Text("心情評估結果")
+                        .font(.system(.largeTitle, design: .rounded))
+                        .fontWeight(.bold)
+                        .padding(.top, 30)
+                        .shadow(color: .blue.opacity(0.3), radius: 2, x: 0, y: 1)
                         .transition(.scale.combined(with: .opacity))
-                        .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2), value: showResult)
+                    
+                    // 心情圓環和描述
+                    moodResultView
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: showResult)
+                    
+                    // 分享按鈕
+                    Button(action: {
+                        guard !isShareButtonDisabled else { return }
+                        isShareButtonDisabled = true
                         
-                        // 活動推薦
-                        Group {
-                            // 動態活動推薦
-                            activityRecommendationsView(
-                                title: "動態活動推薦",
-                                subtitle: "適合您當前心情的體能活動",
-                                icon: "figure.run",
-                                activities: recommendedDynamicActivities
-                            )
-                            .padding(.top)
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
-                            .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.3), value: showResult)
-                            
-                            // 靜態活動推薦
-                            activityRecommendationsView(
-                                title: "靜態活動推薦",
-                                subtitle: "適合您當前心情的靜心活動",
-                                icon: "brain.head.profile",
-                                activities: recommendedStaticActivities
-                            )
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
-                            .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.4), value: showResult)
+                        // 準備分享內容
+                        let shareText = generateShareContent()
+                        let shareImage = preparedImage ?? createShareImage()
+                        
+                        shareItems = [shareText, shareImage]
+                        showShareSheet = true
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            isShareButtonDisabled = false
                         }
-                        
-                        // 筆記和按鈕
-                        Group {
-                            // 筆記輸入區
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("添加筆記")
-                                    .font(.system(.headline, design: .rounded))
-                                    .padding(.horizontal)
+                    }) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 20, weight: .semibold))
+                            Text("分享")
+                                .font(.system(size: 20, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            ZStack {
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color(red: 0.98, green: 0.36, blue: 0.53),
+                                        Color(red: 0.91, green: 0.27, blue: 0.73),
+                                        Color(red: 0.51, green: 0.28, blue: 0.96)
+                                    ]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
                                 
-                                SmartTextEditor(
-                                    text: $notes,
-                                    placeholder: "分享你的感受和想法...",
-                                    minHeight: 100
-                                ) {
-                                    // 筆記內容變更時自動保存
-                                    saveToJournal()
-                                }
-                                .padding(.horizontal)
-                                
-                                // 鍵盤錨點，用於滾動定位
-                                KeyboardAnchor()
+                                // 光效
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color.white.opacity(0.3),
+                                        Color.white.opacity(0),
+                                        Color.white.opacity(0.3)
+                                    ]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
                             }
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                            .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.5), value: showResult)
+                        )
+                        .cornerRadius(16)
+                        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+                        .opacity(isShareButtonDisabled ? 0.6 : 1.0)
+                    }
+                    .padding(.horizontal)
+                    .sheet(isPresented: $showShareSheet, onDismiss: {
+                        // 確保分享表單關閉後重置按鈕狀態
+                        isShareButtonDisabled = false
+                    }) {
+                        ShareSheet(activityItems: shareItems)
+                    }
+                    .onAppear {
+                        // 在結果頁面顯示時預先準備分享資源
+                        prepareShareResources()
+                    }
+                    .transition(.scale.combined(with: .opacity))
+                    .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2), value: showResult)
+                    
+                    // 活動推薦
+                    Group {
+                        // 動態活動推薦
+                        activityRecommendationsView(
+                            title: "動態活動推薦",
+                            subtitle: "適合您當前心情的體能活動",
+                            icon: "figure.run",
+                            activities: recommendedDynamicActivities
+                        )
+                        .padding(.top)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                        .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.3), value: showResult)
+                        
+                        // 靜態活動推薦
+                        activityRecommendationsView(
+                            title: "靜態活動推薦",
+                            subtitle: "適合您當前心情的靜心活動",
+                            icon: "brain.head.profile",
+                            activities: recommendedStaticActivities
+                        )
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                        .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.4), value: showResult)
+                    }
+                    
+                    // 筆記和按鈕
+                    Group {
+                        // 筆記輸入區
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("添加筆記")
+                                .font(.system(.headline, design: .rounded))
+                                .padding(.horizontal)
                             
-                            // 返回按鈕
-                            Button(action: {
-                                // 在返回前再次保存，確保最新內容已儲存
+                            SmartTextEditor(
+                                text: $notes,
+                                placeholder: "分享你的感受和想法...",
+                                minHeight: 100
+                            ) {
+                                // 筆記內容變更時自動保存
                                 saveToJournal()
-                                dismiss()
-                            }) {
-                                Text("完成並返回")
-                                    .font(.system(.headline, design: .rounded))
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(
-                                        ZStack {
-                                            LinearGradient(
-                                                gradient: Gradient(colors: [.green, .green.opacity(0.7)]),
-                                                startPoint: .leading,
-                                                endPoint: .trailing
-                                            )
-                                            
-                                            // 按鈕光效
-                                            LinearGradient(
-                                                gradient: Gradient(colors: [
-                                                    Color.white.opacity(0.3),
-                                                    Color.white.opacity(0),
-                                                    Color.white.opacity(0.3)
-                                                ]),
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        }
-                                    )
-                                    .cornerRadius(16)
-                                    .shadow(color: .green.opacity(0.3), radius: 5, x: 0, y: 3)
                             }
                             .padding(.horizontal)
-                            .padding(.top, 10)
-                            .padding(.bottom, 30)
-                            .transition(.scale.combined(with: .opacity))
-                            .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.6), value: showResult)
+                            
+                            // 文字輸入錨點，用於滾動定位
+                            TextInputAnchor()
                         }
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.5), value: showResult)
+                        
+                        // 返回按鈕
+                        Button(action: {
+                            // 在返回前再次保存，確保最新內容已儲存
+                            saveToJournal()
+                            dismiss()
+                        }) {
+                            Text("完成並返回")
+                                .font(.system(.headline, design: .rounded))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(
+                                    ZStack {
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [.green, .green.opacity(0.7)]),
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                        
+                                        // 按鈕光效
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [
+                                                Color.white.opacity(0.3),
+                                                Color.white.opacity(0),
+                                                Color.white.opacity(0.3)
+                                            ]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    }
+                                )
+                                .cornerRadius(16)
+                                .shadow(color: .green.opacity(0.3), radius: 5, x: 0, y: 3)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 10)
+                        .padding(.bottom, 30)
+                        .transition(.scale.combined(with: .opacity))
+                        .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.6), value: showResult)
                     }
-                    .opacity(showTransition ? 0 : 1)
-                    .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .scale),
-                        removal: .opacity
-                    ))
-                    .animation(.easeInOut(duration: 0.5), value: showTransition)
                 }
-                .adaptiveKeyboard(scrollToBottom: true)
+                .opacity(showTransition ? 0 : 1)
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .scale),
+                    removal: .opacity
+                ))
+                .animation(.easeInOut(duration: 0.5), value: showTransition)
+                .adaptiveKeyboard()
             } else {
                 questionView
                     .offset(x: slideOffset)

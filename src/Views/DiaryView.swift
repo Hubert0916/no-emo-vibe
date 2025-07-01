@@ -355,7 +355,8 @@ struct DiaryEntryRow: View {
                     .rotationEffect(Angle(degrees: 270.0))
                 
                 Text("\(entry.moodPercentage)%")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .minimumScaleFactor(0.5)
                     .foregroundColor(moodColor)
             }
             .frame(width: 50, height: 50)
@@ -437,127 +438,121 @@ struct DiaryEntryDetailView: View {
             Color(red: 0.95, green: 0.95, blue: 1.0)
                 .ignoresSafeArea()
 
-            // 使用統一的鍵盤適應功能
-            ScrollView {
-                VStack(spacing: 25) {
-                    // 日期和心情
-                    Text(dateFormatter.string(from: entry.date))
-                        .font(.system(.title3, design: .rounded))
-                        .foregroundColor(.secondary)
-                        .padding(.top, 30)
+            // 使用統一的鍵盤適應功能 (直接讓adaptiveKeyboard提供ScrollView)
+            VStack(spacing: 25) {
+                // 日期和心情
+                Text(dateFormatter.string(from: entry.date))
+                    .font(.system(.title3, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .padding(.top, 30)
+                
+                // 心情卡片
+                ZStack {
+                    // 卡片背景
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
                     
-                    // 心情卡片
-                    ZStack {
-                        // 卡片背景
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(.white)
-                            .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
-                        
-                        // 內容
-                        HStack(spacing: 25) {
-                            // 環形進度
-                            ZStack {
-                                Circle()
-                                    .stroke(lineWidth: 10)
-                                    .opacity(0.3)
-                                    .foregroundColor(moodColor)
-                                
-                                Circle()
-                                    .trim(from: 0.0, to: CGFloat(min(Double(entry.moodPercentage) / 100, 1.0)))
-                                    .stroke(style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round))
-                                    .foregroundColor(moodColor)
-                                    .rotationEffect(Angle(degrees: 270.0))
-                                
-                                VStack(spacing: 5) {
-                                    Text("\(entry.moodPercentage)%")
-                                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                                        .foregroundColor(moodColor)
-                                    
-                                    Text("心情指數")
-                                        .font(.system(.caption, design: .rounded))
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            .frame(width: 110, height: 110)
+                    // 內容
+                    HStack(spacing: 25) {
+                        // 環形進度
+                        ZStack {
+                            Circle()
+                                .stroke(lineWidth: 10)
+                                .opacity(0.3)
+                                .foregroundColor(moodColor)
                             
-                            // 文字說明區
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(entry.moodDescription)
-                                    .font(.system(.title2, design: .rounded))
-                                    .fontWeight(.bold)
+                            Circle()
+                                .trim(from: 0.0, to: CGFloat(min(Double(entry.moodPercentage) / 100, 1.0)))
+                                .stroke(style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round))
+                                .foregroundColor(moodColor)
+                                .rotationEffect(Angle(degrees: 270.0))
+                            
+                            VStack(spacing: 5) {
+                                Text("\(entry.moodPercentage)%")
+                                    .font(.system(size: 24, weight: .bold, design: .rounded))
                                     .foregroundColor(moodColor)
                                 
-                                Text(getMoodMessage(for: entry.moodPercentage))
-                                    .font(.system(.body, design: .rounded))
+                                Text("心情指數")
+                                    .font(.system(.caption, design: .rounded))
                                     .foregroundColor(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .padding(.horizontal, 30)
-                        .frame(height: 160)
+                        .frame(width: 110, height: 110)
+                        
+                        // 文字說明區
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(entry.moodDescription)
+                                .font(.system(.title2, design: .rounded))
+                                .fontWeight(.bold)
+                                .foregroundColor(moodColor)
+                            
+                            Text(getMoodMessage(for: entry.moodPercentage))
+                                .font(.system(.body, design: .rounded))
+                                .foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal, 30)
+                    .frame(height: 160)
+                }
+                .padding(.horizontal)
+                
+                // 活動推薦
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("今日活動")
+                        .font(.system(.title3, design: .rounded))
+                        .fontWeight(.bold)
+                        .padding(.horizontal)
+                    
+                    VStack(spacing: 12) {
+                        ForEach(entry.activities, id: \.self) { activity in
+                            HStack(spacing: 15) {
+                                // 表情符號
+                                Text(activity.prefix(2))
+                                    .font(.system(size: 30))
+                                
+                                // 活動文字
+                                Text(activity.dropFirst(2))
+                                    .font(.system(.body, design: .rounded))
+                                    .foregroundColor(.primary)
+                                    .lineLimit(1)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .padding(.vertical, 16)
+                            .padding(.horizontal, 20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(.white)
+                                    .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+                            )
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                
+                // 筆記輸入區
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("我的感受")
+                        .font(.system(.title3, design: .rounded))
+                        .fontWeight(.bold)
+                        .padding(.horizontal)
+                    
+                    SmartTextEditor(
+                        text: $notes,
+                        placeholder: "寫下你的感受...",
+                        minHeight: 150
+                    ) {
+                        saveNotes()
                     }
                     .padding(.horizontal)
                     
-                    // 活動推薦
-                    VStack(alignment: .leading, spacing: 15) {
-                        Text("今日活動")
-                            .font(.system(.title3, design: .rounded))
-                            .fontWeight(.bold)
-                            .padding(.horizontal)
-                        
-                        VStack(spacing: 12) {
-                            ForEach(entry.activities, id: \.self) { activity in
-                                HStack(spacing: 15) {
-                                    // 表情符號
-                                    Text(activity.prefix(2))
-                                        .font(.system(size: 30))
-                                    
-                                    // 活動文字
-                                    Text(activity.dropFirst(2))
-                                        .font(.system(.body, design: .rounded))
-                                        .foregroundColor(.primary)
-                                        .lineLimit(1)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                                .padding(.vertical, 16)
-                                .padding(.horizontal, 20)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(.white)
-                                        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
-                                )
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                    
-                    // 筆記輸入區
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("我的感受")
-                            .font(.system(.title3, design: .rounded))
-                            .fontWeight(.bold)
-                            .padding(.horizontal)
-                        
-                        SmartTextEditor(
-                            text: $notes,
-                            placeholder: "寫下你的感受...",
-                            minHeight: 150
-                        ) {
-                            saveNotes()
-                        }
-                        .padding(.horizontal)
-                        
-                        // 鍵盤錨點，用於滾動定位
-                        KeyboardAnchor()
-                    }
-                    
-                    // 底部間距
-                    Color.clear
-                        .frame(height: 50)
+                    // 文字輸入錨點，用於滾動定位
+                    TextInputAnchor()
                 }
             }
-            .adaptiveKeyboard(scrollToBottom: true)
+            .adaptiveKeyboard()
 
             // 保存成功提示
             if showingSaveSuccess {
