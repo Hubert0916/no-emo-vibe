@@ -437,8 +437,8 @@ struct DiaryEntryDetailView: View {
             Color(red: 0.95, green: 0.95, blue: 1.0)
                 .ignoresSafeArea()
 
-            // 使用智能鍵盤避讓容器
-            KeyboardAvoidingContainer {
+            // 使用統一的鍵盤適應功能
+            ScrollView {
                 VStack(spacing: 25) {
                     // 日期和心情
                     Text(dateFormatter.string(from: entry.date))
@@ -547,14 +547,17 @@ struct DiaryEntryDetailView: View {
                             saveNotes()
                         }
                         .padding(.horizontal)
+                        
+                        // 鍵盤錨點，用於滾動定位
+                        KeyboardAnchor()
                     }
                     
-                    // 底部標記，用於滾動定位
+                    // 底部間距
                     Color.clear
-                        .frame(height: 1)
-                        .id("bottom")
+                        .frame(height: 50)
                 }
             }
+            .adaptiveKeyboard(scrollToBottom: true)
 
             // 保存成功提示
             if showingSaveSuccess {

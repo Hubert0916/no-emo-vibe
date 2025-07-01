@@ -59,6 +59,7 @@ struct SmartTextEditor: View {
     
     @State private var isEditing = false
     @FocusState private var isTextEditorFocused: Bool
+    @State private var textHeight: CGFloat = 0
     
     init(
         text: Binding<String>,
@@ -83,21 +84,28 @@ struct SmartTextEditor: View {
                         .stroke(isEditing ? Color.blue.opacity(0.6) : Color.gray.opacity(0.2), lineWidth: isEditing ? 2 : 1)
                 )
             
-            // 文字編輯器（始終存在）
+            // 文字編輯器
             TextEditor(text: $text)
                 .font(.system(.body, design: .rounded))
                 .focused($isTextEditorFocused)
                 .background(Color.clear)
                 .scrollContentBackground(.hidden)
-                .padding(EdgeInsets(top: 8, leading: 6, bottom: 8, trailing: 6))
-                .frame(minHeight: minHeight)
-                .onChange(of: text) { _, _ in
+                .padding(EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12))
+                .frame(minHeight: max(minHeight, textHeight + 24))
+                .onChange(of: text) { _, newValue in
+                    // 計算文本高度
+                    DispatchQueue.main.async {
+                        updateTextHeight()
+                    }
                     onTextChange?()
                 }
                 .onChange(of: isTextEditorFocused) { _, focused in
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(.easeInOut(duration: 0.25)) {
                         isEditing = focused
                     }
+                }
+                .onAppear {
+                    updateTextHeight()
                 }
             
             // 佔位符
@@ -105,8 +113,8 @@ struct SmartTextEditor: View {
                 Text(placeholder)
                     .foregroundColor(.secondary)
                     .font(.system(.body, design: .rounded))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 16)
                     .onTapGesture {
                         isTextEditorFocused = true
                     }
@@ -114,19 +122,38 @@ struct SmartTextEditor: View {
         }
         .animation(.easeInOut(duration: 0.2), value: isEditing)
     }
+    
+    private func updateTextHeight() {
+        let font = UIFont.systemFont(ofSize: 16)
+        let width = UIScreen.main.bounds.width - 80 // 考慮padding和邊距
+        let boundingRect = text.boundingRect(
+            with: CGSize(width: width, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
+            attributes: [.font: font],
+            context: nil
+        )
+        textHeight = max(boundingRect.height, minHeight - 24)
+    }
 }
 
-// MARK: - 鍵盤避讓容器
+// MARK: - 改良的鍵盤避讓容器
 struct KeyboardAvoidingContainer<Content: View>: View {
     @StateObject private var keyboardManager = KeyboardManager()
     @ViewBuilder let content: Content
+    let scrollToBottom: Bool
+    
+    init(scrollToBottom: Bool = true, @ViewBuilder content: () -> Content) {
+        self.scrollToBottom = scrollToBottom
+        self.content = content()
+    }
     
     var body: some View {
         GeometryReader { geometry in
             ScrollViewReader { scrollProxy in
-                ScrollView {
+                ScrollView(.vertical, showsIndicators: false) {
                     content
-                        .padding(.bottom, keyboardManager.isKeyboardVisible ? 20 : 0)
+                        .padding(.bottom, keyboardManager.isKeyboardVisible ? (keyboardManager.keyboardHeight + 20) : 20)
+                        .frame(minHeight: geometry.size.height - (keyboardManager.isKeyboardVisible ? keyboardManager.keyboardHeight : 0))
                 }
                 .background(
                     Color.clear
@@ -136,15 +163,16 @@ struct KeyboardAvoidingContainer<Content: View>: View {
                         }
                 )
                 .onChange(of: keyboardManager.isKeyboardVisible) { _, isVisible in
-                    if isVisible {
-                        // 當鍵盤顯示時，稍微延遲後滾動到底部
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    if isVisible && scrollToBottom {
+                        // 當鍵盤顯示時，延遲滾動確保佈局完成
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             withAnimation(.easeInOut(duration: 0.5)) {
-                                scrollProxy.scrollTo("bottom", anchor: .bottom)
+                                scrollProxy.scrollTo("keyboardAnchor", anchor: .bottom)
                             }
                         }
                     }
                 }
+                .coordinateSpace(name: "keyboardAvoidingContainer")
             }
         }
         .environmentObject(keyboardManager)
@@ -154,33 +182,36 @@ struct KeyboardAvoidingContainer<Content: View>: View {
 // MARK: - View 擴展
 extension View {
     /// 為視圖添加鍵盤避讓功能
-    func keyboardAvoiding() -> some View {
-        KeyboardAvoidingContainer {
+    func keyboardAvoiding(scrollToBottom: Bool = true) -> some View {
+        KeyboardAvoidingContainer(scrollToBottom: scrollToBottom) {
             self
         }
     }
     
     /// 簡單的鍵盤取消手勢
     func hideKeyboardOnTap() -> some View {
-        onTapGesture {
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-        }
+        background(
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
+        )
     }
     
     /// 點擊取消鍵盤（別名）
     func dismissKeyboardOnTap() -> some View {
-        onTapGesture {
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-        }
+        hideKeyboardOnTap()
     }
     
-    /// 智能鍵盤適應（包含避讓和取消功能）
-    func smartKeyboardAdaptive() -> some View {
-        modifier(SmartKeyboardAdaptiveModifier())
+    /// 統一的鍵盤適應功能（推薦使用）
+    func adaptiveKeyboard(scrollToBottom: Bool = true) -> some View {
+        keyboardAvoiding(scrollToBottom: scrollToBottom)
+            .hideKeyboardOnTap()
     }
 }
 
-// MARK: - 智能鍵盤適應修飾符
+// MARK: - 智能鍵盤適應修飾符（已棄用，使用adaptiveKeyboard替代）
 struct SmartKeyboardAdaptiveModifier: ViewModifier {
     @StateObject private var keyboardManager = KeyboardManager()
     
@@ -225,10 +256,19 @@ struct FloatingKeyboardToolbar: View {
                     )
                 }
                 .padding()
-                .padding(.bottom, keyboardManager.keyboardHeight - 50)
+                .padding(.bottom, max(keyboardManager.keyboardHeight - 50, 20))
             }
             .transition(.move(edge: .bottom).combined(with: .opacity))
             .animation(.easeInOut(duration: 0.3), value: keyboardManager.isKeyboardVisible)
         }
+    }
+}
+
+// MARK: - 鍵盤錨點視圖
+struct KeyboardAnchor: View {
+    var body: some View {
+        Color.clear
+            .frame(height: 1)
+            .id("keyboardAnchor")
     }
 } 

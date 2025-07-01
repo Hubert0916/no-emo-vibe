@@ -736,7 +736,6 @@ struct RelaxationView: View {
                           startPoint: .topLeading,
                           endPoint: .bottomTrailing)
                 .ignoresSafeArea()
-                .dismissKeyboardOnTap() // 點擊背景取消鍵盤
             
             // 浮動背景粒子
             ForEach(0..<15) { index in
@@ -874,7 +873,9 @@ struct RelaxationView: View {
                                     saveToJournal()
                                 }
                                 .padding(.horizontal)
-                                .id("notesEditor") // 用於滾動定位
+                                
+                                // 鍵盤錨點，用於滾動定位
+                                KeyboardAnchor()
                             }
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                             .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.5), value: showResult)
@@ -927,6 +928,7 @@ struct RelaxationView: View {
                     ))
                     .animation(.easeInOut(duration: 0.5), value: showTransition)
                 }
+                .adaptiveKeyboard(scrollToBottom: true)
             } else {
                 questionView
                     .offset(x: slideOffset)
@@ -945,7 +947,6 @@ struct RelaxationView: View {
             performMoodAnalysis()
         }
         .preferredColorScheme(.light) // 強制使用淺色模式
-        .smartKeyboardAdaptive() // 智能鍵盤適應功能
     }
     
     private var questionView: some View {
